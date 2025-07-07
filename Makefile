@@ -197,7 +197,7 @@ endif
 
 # $(call DOCKER, image, command)
 define DOCKER
-	docker run "$(DOCKER_OPTIONS)" --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+	docker run $(DOCKER_OPTIONS) --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
 endef
 
 ifeq ($(BUILD_IN_DOCKER),y)
