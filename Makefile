@@ -192,11 +192,11 @@ INTERACTIVE:=$(shell [ -t 0 ] && echo 1)
 # $(call DOCKER, image, command)
 ifdef INTERACTIVE
 define DOCKER
-	docker run -it --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+	docker run -it --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 --user $(shell id -u):$(shell id -g) -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
 endef
 else
 define DOCKER
-	docker run --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+	docker run --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 --user $(shell id -u):$(shell id -g) -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
 endef
 endif
 
