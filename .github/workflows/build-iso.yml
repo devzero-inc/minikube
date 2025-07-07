@@ -1,0 +1,48 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - deploy/iso/**/*
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm64
+          - arch: amd64
+            runs-on: ubuntu-xl
+            
+    runs-on: "${{ matrix.runs-on }}"
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+          fetch-depth: 1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::056855531191:role/github-actions-oidc-role
+          aws-region: us-west-2
+
+      - name: Build ISO 
+        env:
+          MINIKUBE_BUILD_IN_DOCKER: "y"
+          BUILD_IN_DOCKER: "y"
+          BUILD_IMAGE: "gcr.io/k8s-minikube/buildroot-image"
+        run: |
+          make buildroot-image
+          make minikube-iso-${{ matrix.arch }}
+
+      - name: Upload ISO
+        run: |
+          aws s3 cp ./out/minikube-${{ matrix.arch }}.iso s3://dz-cli/minikube/minikube-${{ matrix.arch }}.iso

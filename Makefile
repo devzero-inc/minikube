@@ -79,7 +79,7 @@ MINIKUBE_BUCKET ?= minikube/releases
 MINIKUBE_UPLOAD_LOCATION := gs://${MINIKUBE_BUCKET}
 MINIKUBE_RELEASES_URL=https://github.com/kubernetes/minikube/releases/download
 
-KERNEL_VERSION ?= 5.10.207
+KERNEL_VERSION ?= 5.19.17
 # latest from https://github.com/golangci/golangci-lint/releases
 # update this only by running `make update-golint-version`
 GOLINT_VERSION ?= v2.1.5
@@ -189,7 +189,7 @@ endef
 
 # $(call DOCKER, image, command)
 define DOCKER
-	docker run --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 --user $(shell id -u):$(shell id -g) -w /app -v $(PWD):/app:Z -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+	docker run -it --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
 endef
 
 ifeq ($(BUILD_IN_DOCKER),y)
@@ -303,6 +303,9 @@ minikube-iso-amd64: minikube-iso-x86_64
 minikube-iso-arm64: minikube-iso-aarch64
 
 minikube-iso-%: deploy/iso/minikube-iso/board/minikube/%/rootfs-overlay/usr/bin/auto-pause # build minikube iso
+ifeq ($(MINIKUBE_BUILD_IN_DOCKER),y)
+	$(call DOCKER,$(BUILD_IMAGE),/usr/bin/make $@)
+else
 	echo $(VERSION_JSON) > deploy/iso/minikube-iso/board/minikube/$*/rootfs-overlay/version.json
 	echo $(ISO_VERSION) > deploy/iso/minikube-iso/board/minikube/$*/rootfs-overlay/etc/VERSION
 	cp deploy/iso/minikube-iso/arch/$*/Config.in.tmpl deploy/iso/minikube-iso/Config.in
@@ -324,31 +327,32 @@ minikube-iso-%: deploy/iso/minikube-iso/board/minikube/%/rootfs-overlay/usr/bin/
         else \
                 mv $(BUILD_DIR)/buildroot/output-x86_64/images/rootfs.iso9660 $(BUILD_DIR)/minikube-amd64.iso; \
         fi;
+endif
 
 # Change buildroot configuration for the minikube ISO
 .PHONY: iso-menuconfig
 iso-menuconfig-%: ## Configure buildroot configuration
+ifeq ($(MINIKUBE_BUILD_IN_DOCKER),y)
+	$(call DOCKER,$(BUILD_IMAGE),/usr/bin/make $@)
+else
 	$(MAKE) -C $(BUILD_DIR)/buildroot $(BUILDROOT_OPTIONS) O=$(BUILD_DIR)/buildroot/output-$* menuconfig
 	$(MAKE) -C $(BUILD_DIR)/buildroot $(BUILDROOT_OPTIONS) O=$(BUILD_DIR)/buildroot/output-$* savedefconfig
+endif
 
 # Change the kernel configuration for the minikube ISO
-linux-menuconfig-%:  ## Configure Linux kernel configuration
+.PHONY: iso-menuconfig
+linux-menuconfig-%: ## Configure buildroot configuration
+ifeq ($(MINIKUBE_BUILD_IN_DOCKER),y)
+	$(call DOCKER,$(BUILD_IMAGE),/usr/bin/make $@)
+else
 	$(MAKE) -C $(BUILD_DIR)/buildroot/output-$*/build/linux-$(KERNEL_VERSION)/ menuconfig
 	$(MAKE) -C $(BUILD_DIR)/buildroot/output-$*/build/linux-$(KERNEL_VERSION)/ savedefconfig
 	cp $(BUILD_DIR)/buildroot/output-$*/build/linux-$(KERNEL_VERSION)/defconfig deploy/iso/minikube-iso/board/minikube/$*/linux_$*_defconfig
-
-out/minikube-%.iso: $(shell find "deploy/iso/minikube-iso" -type f)
-ifeq ($(IN_DOCKER),1)
-	$(MAKE) minikube-iso-$*
-else
-	docker run --rm --workdir /mnt --volume $(CURDIR):/mnt:Z $(ISO_DOCKER_EXTRA_ARGS) \
-		--user $(shell id -u):$(shell id -g) --env HOME=/tmp --env IN_DOCKER=1 \
-		$(ISO_BUILD_IMAGE) /bin/bash -lc '/usr/bin/make minikube-iso-$*'
 endif
 
 iso_in_docker:
-	docker run -it --rm --workdir /mnt --volume $(CURDIR):/mnt:Z $(ISO_DOCKER_EXTRA_ARGS) \
-		--user $(shell id -u):$(shell id -g) --env HOME=/tmp --env IN_DOCKER=1 \
+	docker run -it --rm --workdir /mnt --volume $(CURDIR):/mnt:Z --mount type=tmpfs,dst=/app/out $(ISO_DOCKER_EXTRA_ARGS) \
+		--env IN_DOCKER=1 \
 		$(ISO_BUILD_IMAGE) /bin/bash
 
 .PHONY: test-pkg

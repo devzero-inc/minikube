@@ -26,7 +26,6 @@ RUN apt-get update \
 		python \
 		unzip \
 		bc \
-		gcc-multilib \
 		automake \
 		libtool \
 		gnupg2 \
@@ -37,6 +36,9 @@ RUN apt-get update \
 		golang-go \
 		libpcre3-dev \
 		mkisofs \
+		libncurses-dev \
+		flex \
+		bison \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
@@ -44,6 +46,11 @@ RUN chmod 777 /app
 
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG=en_US.utf8
+
+RUN useradd -ms /bin/bash builder
+USER builder
+ENV HOME=/home/builder
+WORKDIR /home/builder
 
 # dumb init will allow us to interrupt the build with ^C
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
