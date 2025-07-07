@@ -189,15 +189,13 @@ endef
 
 # https://stackoverflow.com/questions/4251559/how-can-i-tell-if-a-makefile-is-being-run-from-an-interactive-shell
 INTERACTIVE:=$(shell [ -t 0 ] && echo 1)
-ifdef INTERACTIVE
-	DOCKER_OPTIONS="-it"
-else
-	DOCKER_OPTIONS=""
-endif
-
 # $(call DOCKER, image, command)
 define DOCKER
-	docker run $(DOCKER_OPTIONS) --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+ifdef INTERACTIVE
+	docker run -it --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+else
+	docker run --rm -e GOCACHE=/app/.cache -e IN_DOCKER=1 -w /app -v $(PWD):/app -v $(GOPATH):/go --init $(1) /bin/bash -c '$(2)'
+endif
 endef
 
 ifeq ($(BUILD_IN_DOCKER),y)
