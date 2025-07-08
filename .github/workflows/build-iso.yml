@@ -19,8 +19,10 @@ jobs:
       matrix:
         include:
           - arch: aarch64
+            iso_name: minikube-arm64.iso
             runs-on: ubuntu-24.04-arm64-massive
           - arch: x86_64
+            iso_name: minikube-amd64.iso
             runs-on: ubuntu-24.04-amd64-massive
 
     runs-on: "${{ matrix.runs-on }}"
@@ -51,4 +53,4 @@ jobs:
           
       - name: Upload ISO
         run: |
-          aws s3 cp ./out/minikube-${{ matrix.arch }}.iso s3://dz-cli/minikube/minikube-${{ matrix.arch }}.iso
+          aws s3 cp ./out/${{ matrix.iso_name }} s3://dz-cli/minikube/${{ matrix.iso_name }}
