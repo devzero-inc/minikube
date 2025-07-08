@@ -1,0 +1,60 @@
+From eb36e4d8e82c665150610e15ba690978adfa64f4 Mon Sep 17 00:00:00 2001
+From: Random developer <dev@random.com>
+Date: Tue, 8 Jul 2025 13:06:54 -0700
+Subject: [PATCH] enable building go on arm64 hosts
+
+---
+ package/go/Config.in.host                             | 1 -
+ package/go/go-bootstrap-stage1/go-bootstrap-stage1.mk | 6 ++++++
+ package/go/go-bootstrap-stage2/go-bootstrap-stage2.mk | 3 +++
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/package/go/Config.in.host b/package/go/Config.in.host
+index 7e354b32..1f69b660 100644
+--- a/package/go/Config.in.host
++++ b/package/go/Config.in.host
+@@ -2,7 +2,6 @@
+ config BR2_PACKAGE_HOST_GO_TARGET_ARCH_SUPPORTS
+ 	bool
+ 	default y
+-	depends on BR2_PACKAGE_HOST_GO_BOOTSTRAP_STAGE3_ARCH_SUPPORTS
+ 	# See https://go.dev/doc/install/source#environment
+ 	# See src/go/build/syslist.go for the list of supported architectures
+ 	depends on (BR2_arm && BR2_TOOLCHAIN_SUPPORTS_PIE) || BR2_aarch64 \
+diff --git a/package/go/go-bootstrap-stage1/go-bootstrap-stage1.mk b/package/go/go-bootstrap-stage1/go-bootstrap-stage1.mk
+index 3e4ee574..4ec33c7c 100644
+--- a/package/go/go-bootstrap-stage1/go-bootstrap-stage1.mk
++++ b/package/go/go-bootstrap-stage1/go-bootstrap-stage1.mk
+@@ -13,7 +13,13 @@ GO_BOOTSTRAP_STAGE1_SOURCE = go$(GO_BOOTSTRAP_STAGE1_VERSION).tar.gz
+ GO_BOOTSTRAP_STAGE1_LICENSE = BSD-3-Clause
+ GO_BOOTSTRAP_STAGE1_LICENSE_FILES = LICENSE
+ 
++# If we do not support this architecture with go-bootstrap-stage1, depend on the host
++# Go compiler to bootstrap the host-go compiler instead.
++ifeq ($(BR2_PACKAGE_HOST_GO_BOOTSTRAP_STAGE1_ARCH_SUPPORTS),y)
+ HOST_GO_BOOTSTRAP_STAGE1_ROOT = $(HOST_DIR)/lib/go-$(GO_BOOTSTRAP_STAGE1_VERSION)
++else
++HOST_GO_BOOTSTRAP_STAGE1_ROOT = /usr/lib/go
++endif
+ 
+ # The go build system is not compatible with ccache, so use
+ # HOSTCC_NOCCACHE. See https://github.com/golang/go/issues/11685.
+diff --git a/package/go/go-bootstrap-stage2/go-bootstrap-stage2.mk b/package/go/go-bootstrap-stage2/go-bootstrap-stage2.mk
+index 98bf624b..cbe25bca 100644
+--- a/package/go/go-bootstrap-stage2/go-bootstrap-stage2.mk
++++ b/package/go/go-bootstrap-stage2/go-bootstrap-stage2.mk
+@@ -13,8 +13,11 @@ GO_BOOTSTRAP_STAGE2_SOURCE = go$(GO_BOOTSTRAP_STAGE2_VERSION).src.tar.gz
+ GO_BOOTSTRAP_STAGE2_LICENSE = BSD-3-Clause
+ GO_BOOTSTRAP_STAGE2_LICENSE_FILES = LICENSE
+ 
++# Do not depend on go-bootstrap-stage1 if it is not supported by this architecture
++ifeq ($(BR2_PACKAGE_HOST_GO_BOOTSTRAP_STAGE1_ARCH_SUPPORTS),y)
+ # Use go-bootstrap-stage1 to bootstrap.
+ HOST_GO_BOOTSTRAP_STAGE2_DEPENDENCIES = host-go-bootstrap-stage1
++endif
+ 
+ HOST_GO_BOOTSTRAP_STAGE2_ROOT = $(HOST_DIR)/lib/go-$(GO_BOOTSTRAP_STAGE2_VERSION)
+ 
+-- 
+2.39.3 (Apple Git-146)
+
