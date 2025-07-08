@@ -38,12 +38,12 @@ CRI_DOCKERD_AARCH64_POST_EXTRACT_HOOKS += CRI_DOCKERD_AARCH64_POST_EXTRACT_WORKA
 # If https://github.com/Mirantis/cri-dockerd/blob/master/packaging/Makefile changes, then this will almost certainly need to change
 # This uses the static make target at the top level Makefile, since that builds everything, then picks out the arm64 binary
 define CRI_DOCKERD_AARCH64_BUILD_CMDS
-	$(CRI_DOCKERD_AARCH64_ENV) $(MAKE) $(TARGET_CONFIGURE_OPTS) LDFLAGS=$(CRI_DOCKERD_AARCH64_BUILDFLAGS) GO_VERSION=$(GO_VERSION) -C $(@D) VERSION=$(CRI_DOCKERD_AARCH64_VER) REVISION=$(CRI_DOCKERD_AARCH64_REV) static
+	$(CRI_DOCKERD_AARCH64_ENV) $(MAKE) $(TARGET_CONFIGURE_OPTS) LDFLAGS=$(CRI_DOCKERD_AARCH64_BUILDFLAGS) GO_VERSION=$(GO_VERSION) -C $(@D) VERSION=$(CRI_DOCKERD_AARCH64_VER) REVISION=$(CRI_DOCKERD_AARCH64_REV) static-linux
 endef
 
 define CRI_DOCKERD_AARCH64_INSTALL_TARGET_CMDS
 	$(INSTALL) -Dm755 \
-		$(@D)/packaging/static/build/arm/cri-dockerd/cri-dockerd \
+		$(@D)/packaging/static/build/linux/cri-dockerd/cri-dockerd \
 		$(TARGET_DIR)/usr/bin/cri-dockerd
 endef
 
