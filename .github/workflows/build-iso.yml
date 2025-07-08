@@ -19,9 +19,9 @@ jobs:
       matrix:
         include:
           - arch: aarch64
-            runs-on: ubuntu-24.04-arm64
+            runs-on: ubuntu-24.04-arm64-massive
           - arch: x86_64
-            runs-on: ubuntu-xl
+            runs-on: ubuntu-24.04-amd64-massive
 
     runs-on: "${{ matrix.runs-on }}"
     steps:
