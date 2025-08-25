@@ -11,7 +11,7 @@ jobs:
     name: Install bom and generate SBOM
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
       - name: Install bom
         uses: kubernetes-sigs/release-actions/setup-bom@a30d93cf2aa029e1e4c8a6c79f766aebf429fddb # main
       - name: Generage SBOM
