@@ -28,7 +28,7 @@ jobs:
     runs-on: "${{ matrix.runs-on }}"
     steps:
       - name: Checkout Code Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           show-progress: false
           fetch-depth: 1
